@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Menu, X, Bell, MessageCircle, User, LogOut, Building2, CircleDollarSign } from 'lucide-react';
+import { Menu, X, Bell, MessageCircle, User, LogOut, Building2, CircleDollarSign, Compass } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { OnboardingTour } from '../onboarding/OnboardingTour';
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -83,6 +85,14 @@ export const Navbar: React.FC = () => {
                     {link.text}
                   </Link>
                 ))}
+                
+                <Button 
+                  variant="ghost"
+                  onClick={() => setShowTour(true)}
+                  leftIcon={<Compass size={18} />}
+                >
+                  Take a Tour
+                </Button>
                 
                 <Button 
                   variant="ghost"
@@ -164,6 +174,17 @@ export const Navbar: React.FC = () => {
                   
                   <button
                     onClick={() => {
+                      setShowTour(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex w-full items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                  >
+                    <Compass size={18} className="mr-3" />
+                    Take a Tour
+                  </button>
+                  
+                  <button
+                    onClick={() => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
@@ -194,6 +215,10 @@ export const Navbar: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+      
+      {showTour && user && (
+        <OnboardingTour role={user.role} onClose={() => setShowTour(false)} />
       )}
     </nav>
   );

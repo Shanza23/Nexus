@@ -4,6 +4,7 @@ import { Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { PasswordStrengthMeter } from '../../components/auth/PasswordStrengthMeter';
 
 export const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -85,6 +86,7 @@ export const ResetPasswordPage: React.FC = () => {
               fullWidth
               startAdornment={<Lock size={18} />}
             />
+            <PasswordStrengthMeter password={password} />
             
             <Input
               label="Confirm new password"

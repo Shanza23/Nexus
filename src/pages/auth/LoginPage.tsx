@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, CircleDollarSign, Building2, LogIn, AlertCircle } from 'lucide-react';
+import { User, CircleDollarSign, Building2, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { OtpInput } from '../../components/auth/OtpInput';
 import { UserRole } from '../../types';
+import toast from 'react-hot-toast';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,23 +14,60 @@ export const LoginPage: React.FC = () => {
   const [role, setRole] = useState<UserRole>('entrepreneur');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { login } = useAuth();
+
+  // Step 2: 2FA / OTP mockup
+  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
-  
+
+  const sendOtp = () => {
+    // Mock OTP generation — in a real app this would be emailed/texted by a backend.
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
+    toast.success(`Demo verification code: ${code}`, { duration: 8000 });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    
+
     try {
       await login(email, password, role);
-      // Redirect based on user role
-      navigate(role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
+      // Credentials are valid — move to the 2FA step instead of finishing login immediately
+      setStep('otp');
+      sendOtp();
     } catch (err) {
       setError((err as Error).message);
+    } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setOtpError('Enter the 6-digit code');
+      return;
+    }
+    if (otp !== generatedOtp) {
+      setOtpError('Incorrect code. Please try again.');
+      return;
+    }
+    setOtpError(null);
+    navigate(role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
+  };
+
+  const handleBackToCredentials = () => {
+    // Undo the tentative login from step 1 until 2FA is actually completed
+    logout();
+    setOtp('');
+    setOtpError(null);
+    setStep('credentials');
   };
   
   // For demo purposes, pre-filled credentials
@@ -43,6 +82,59 @@ export const LoginPage: React.FC = () => {
     setRole(userRole);
   };
   
+  if (step === 'otp') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="flex justify-center">
+            <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
+              <ShieldCheck size={28} className="text-white" />
+            </div>
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Two-factor verification
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Enter the 6-digit code we "sent" to {email}
+          </p>
+        </div>
+
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {otpError && (
+              <div className="mb-4 bg-error-50 border border-error-500 text-error-700 px-4 py-3 rounded-md flex items-start">
+                <AlertCircle size={18} className="mr-2 mt-0.5" />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleVerifyOtp}>
+              <OtpInput value={otp} onChange={setOtp} />
+
+              <Button type="submit" fullWidth leftIcon={<ShieldCheck size={18} />}>
+                Verify & Sign In
+              </Button>
+            </form>
+
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <button onClick={handleBackToCredentials} className="text-gray-500 hover:text-gray-700">
+                Back
+              </button>
+              <button onClick={sendOtp} className="font-medium text-primary-600 hover:text-primary-500">
+                Resend code
+              </button>
+            </div>
+
+            <p className="mt-4 text-xs text-gray-400 text-center">
+              Demo mode: there's no real SMS/email backend, so the code is shown in a toast
+              instead of being sent to you.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">

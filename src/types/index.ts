@@ -57,6 +57,8 @@ export interface CollaborationRequest {
   createdAt: string;
 }
 
+export type DocumentStatus = 'draft' | 'in_review' | 'signed';
+
 export interface Document {
   id: string;
   name: string;
@@ -66,6 +68,48 @@ export interface Document {
   shared: boolean;
   url: string;
   ownerId: string;
+  status: DocumentStatus;
+  signatureDataUrl?: string;
+  signedBy?: string;
+  signedAt?: string;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  userId: string;
+  date: string; // ISO date, e.g. 2026-07-10
+  startTime: string; // e.g. '09:00'
+  endTime: string; // e.g. '09:30'
+  isBooked: boolean;
+}
+
+export type MeetingStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
+
+export interface Meeting {
+  id: string;
+  slotId: string;
+  requesterId: string; // user who requested the meeting
+  hostId: string; // user who owns the availability slot
+  date: string;
+  startTime: string;
+  endTime: string;
+  topic: string;
+  status: MeetingStatus;
+  createdAt: string;
+}
+
+export type TransactionType = 'deposit' | 'withdraw' | 'transfer' | 'funding';
+export type TransactionStatus = 'completed' | 'pending' | 'failed';
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  senderId?: string;
+  receiverId?: string;
+  status: TransactionStatus;
+  note?: string;
+  createdAt: string;
 }
 
 export interface AuthContextType {
